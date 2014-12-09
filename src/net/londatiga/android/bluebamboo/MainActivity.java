@@ -2,7 +2,6 @@ package net.londatiga.android.bluebamboo;
 
 import net.londatiga.android.bluebamboo.R;
 import net.londatiga.android.bluebamboo.pockdata.PocketPos;
-
 import net.londatiga.android.bluebamboo.util.DateUtil;
 import net.londatiga.android.bluebamboo.util.FontDefine;
 import net.londatiga.android.bluebamboo.util.Printer;
@@ -10,25 +9,27 @@ import net.londatiga.android.bluebamboo.util.StringUtil;
 import net.londatiga.android.bluebamboo.util.Util;
 import net.londatiga.android.bluebamboo.util.DataConstants;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.InvalidParameterException;
+
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.ProgressDialog;
-
 import android.os.Build;
 import android.os.Bundle;
-
+//import android_serialport_api.SerialPort;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -38,6 +39,7 @@ import android.content.IntentFilter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
+
 
 /**
  * Demo Blue Bamboo P25 Thermal Printer.
@@ -64,111 +66,173 @@ public class MainActivity extends Activity {
 	
 	private ArrayList<BluetoothDevice> mDeviceList = new ArrayList<BluetoothDevice>();
 	
+    protected Application mApplication;
+	//protected SerialPort mSerialPort;
+	private SerialPort mSerialPort; 
+	protected OutputStream mOutputStream;
+	private InputStream mInputStream;
+	private ReadThread mReadThread;
+
+	private class ReadThread extends Thread {
+
+		@Override
+		public void run() {
+			super.run();
+			while(!isInterrupted()) {
+				int size;
+				try {
+					byte[] buffer = new byte[64];
+					if (mInputStream == null) return;
+					size = mInputStream.read(buffer);
+//					if (size > 0) {
+//						onDataReceived(buffer, size);
+//					}
+				} catch (IOException e) {
+					e.printStackTrace();
+					return;
+				}
+			}
+		}
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.activity_main);		
 		
-		mConnectBtn			= (Button) findViewById(R.id.btn_connect);
-		mEnableBtn			= (Button) findViewById(R.id.btn_enable);
+//		mConnectBtn			= (Button) findViewById(R.id.btn_connect);
+//		mEnableBtn			= (Button) findViewById(R.id.btn_enable);
 		mPrintDemoBtn 		= (Button) findViewById(R.id.btn_print_demo);
 		mPrintBarcodeBtn 	= (Button) findViewById(R.id.btn_print_barcode);
 		mPrintImageBtn 		= (Button) findViewById(R.id.btn_print_image);
 		mPrintReceiptBtn 	= (Button) findViewById(R.id.btn_print_receipt);
 		mPrintTextBtn		= (Button) findViewById(R.id.btn_print_text);
-		mDeviceSp 			= (Spinner) findViewById(R.id.sp_device);
+//		mDeviceSp 			= (Spinner) findViewById(R.id.sp_device);
 		
-		mBluetoothAdapter	= BluetoothAdapter.getDefaultAdapter();
+		mSerialPort=new SerialPort("/dev/ttyS2",9600,0);
+		 //Log.d("Serail Port Open ...", strTemp);
+			if(mSerialPort.openPort()<0)
+			{
+				showToast("============open serial port failed============");
+//					Toast.makeText(this, getString(R.string.open_serial_error), Toast.LENGTH_SHORT).show();
+			}else{
+                  // mIccardInitThread = new IccardInitThread();
+                   //mIccardInitThread.start();
+           }
+		
+//        mApplication = (Application) getApplication();
+//		try {
+//			mSerialPort = ((Object) mApplication).getSerialPort();
+//			mOutputStream = mSerialPort.getOutputStream();
+//			mInputStream = mSerialPort.getInputStream();
+//
+//			/* Create a receiving thread */
+//			mReadThread = new ReadThread();
+//			mReadThread.start();
+//		} catch (SecurityException e) {
+//			DisplayError(R.string.error_security);
+//		} catch (IOException e) {
+//			DisplayError(R.string.error_unknown);
+//		} catch (InvalidParameterException e) {
+//			DisplayError(R.string.error_configuration);
+//		}
+		
+//		mBluetoothAdapter	= BluetoothAdapter.getDefaultAdapter();
 				
-		if (mBluetoothAdapter == null) {
-			showUnsupported();
-		} else {
-			if (!mBluetoothAdapter.isEnabled()) {
-				showDisabled();
-			} else {
-				showEnabled();
-				
-				Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-				
-				if (pairedDevices != null) {
-					mDeviceList.addAll(pairedDevices);
-					
-					updateDeviceList();
-				}
-			}
-			
-			mProgressDlg 	= new ProgressDialog(this);
-			
-			mProgressDlg.setMessage("Scanning...");
-			mProgressDlg.setCancelable(false);
-			mProgressDlg.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-			    @Override
-			    public void onClick(DialogInterface dialog, int which) {
-			        dialog.dismiss();
-			        
-			        mBluetoothAdapter.cancelDiscovery();
-			    }
-			});
-			
-			mConnectingDlg 	= new ProgressDialog(this);
-			
-			mConnectingDlg.setMessage("Connecting...");
-			mConnectingDlg.setCancelable(false);
-			
-			mConnector 		= new P25Connector(new P25Connector.P25ConnectionListener() {
-				
-				@Override
-				public void onStartConnecting() {
-					mConnectingDlg.show();
-				}
-				
-				@Override
-				public void onConnectionSuccess() {
-					mConnectingDlg.dismiss();
-					
-					showConnected();
-				}
-				
-				@Override
-				public void onConnectionFailed(String error) {
-					mConnectingDlg.dismiss();
-				}
-				
-				@Override
-				public void onConnectionCancelled() {
-					mConnectingDlg.dismiss();
-				}
-				
-				@Override
-				public void onDisconnected() {
-					showDisonnected();
-				}
-			});
-			
+//		if (mBluetoothAdapter == null) {
+//			showUnsupported();
+//		} else {
+//			if (!mBluetoothAdapter.isEnabled()) {
+//				showDisabled();
+//			} else {
+//				showEnabled();
+//				
+//				Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+//				
+//				if (pairedDevices != null) {
+//					mDeviceList.addAll(pairedDevices);
+//					
+//					updateDeviceList();
+//				}
+//			}
+//			
+//			mProgressDlg 	= new ProgressDialog(this);
+//			
+//			mProgressDlg.setMessage("Scanning...");
+//			mProgressDlg.setCancelable(false);
+//			mProgressDlg.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+//			    @Override
+//			    public void onClick(DialogInterface dialog, int which) {
+//			        dialog.dismiss();
+//			        
+//			        mBluetoothAdapter.cancelDiscovery();
+//			    }
+//			});
+//			
+//			mConnectingDlg 	= new ProgressDialog(this);
+//			
+////			mConnectingDlg.setMessage("Connecting...");
+////			mConnectingDlg.setCancelable(false);
+//			
+//			mConnector 		= new P25Connector(new P25Connector.P25ConnectionListener() {
+//				
+//				@Override
+//				public void onStartConnecting() {
+//					mConnectingDlg.show();
+//				}
+//				
+//				@Override
+//				public void onConnectionSuccess() {
+//					mConnectingDlg.dismiss();
+//					
+//					showConnected();
+//				}
+//				
+//				@Override
+//				public void onConnectionFailed(String error) {
+//					mConnectingDlg.dismiss();
+//				}
+//				
+//				@Override
+//				public void onConnectionCancelled() {
+//					mConnectingDlg.dismiss();
+//				}
+//				
+//				@Override
+//				public void onDisconnected() {
+//					showDisonnected();
+//				}
+//			});
+//			
 			//enable bluetooth
-			mEnableBtn.setOnClickListener(new View.OnClickListener() {				
-				@Override
-				public void onClick(View v) {					
-					Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-						
-					startActivityForResult(intent, 1000);					
-				}
-			});
+//			mEnableBtn.setOnClickListener(new View.OnClickListener() {				
+//				@Override
+//				public void onClick(View v) {					
+//					Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//						
+//					startActivityForResult(intent, 1000);					
+//				}
+//			});
 			
 			//connect/disconnect
-			mConnectBtn.setOnClickListener(new View.OnClickListener() {				
-				@Override
-				public void onClick(View arg0) {
-					connect();			
-				}
-			});
-			
+//			mConnectBtn.setOnClickListener(new View.OnClickListener() {				
+//				@Override
+//				public void onClick(View arg0) {
+////					connect();			
+//				}
+//			});
+//			
 			//print demo text
 			mPrintDemoBtn.setOnClickListener(new View.OnClickListener() {			
 				@Override
 				public void onClick(View v) {
-					printDemoContent();
+					try {
+						printDemoContent();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			});
 			
@@ -179,7 +243,12 @@ public class MainActivity extends Activity {
 					InputTextDialog dialog = new InputTextDialog(MainActivity.this, new InputTextDialog.OnOkClickListener() {				
 						@Override
 						public void onPrintClick(String text) {
-							printText(text);
+							try {
+								printText(text);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
 					});
 					
@@ -207,20 +276,25 @@ public class MainActivity extends Activity {
 			mPrintReceiptBtn.setOnClickListener(new View.OnClickListener() {				
 				@Override
 				public void onClick(View arg0) {
-					printStruk();
+					try {
+						printStruk();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			});
-		}
+//		}
 		
-		IntentFilter filter = new IntentFilter();
+//		IntentFilter filter = new IntentFilter();
 		
-		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-		filter.addAction(BluetoothDevice.ACTION_FOUND);
-		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-		filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-		
-		registerReceiver(mReceiver, filter);
+//		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+//		filter.addAction(BluetoothDevice.ACTION_FOUND);
+//		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+//		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+//		filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+//		
+//		registerReceiver(mReceiver, filter);
 	}
 
 	@Override
@@ -241,26 +315,26 @@ public class MainActivity extends Activity {
 
 	@Override
 	public void onPause() {
-		if (mBluetoothAdapter != null) {
-			if (mBluetoothAdapter.isDiscovering()) {
-				mBluetoothAdapter.cancelDiscovery();
-			}			
-		}
-		
-		if (mConnector != null) {
-			try {
-				mConnector.disconnect();
-			} catch (P25ConnectionException e) {
-				e.printStackTrace();
-			}
-		}
+//		if (mBluetoothAdapter != null) {
+//			if (mBluetoothAdapter.isDiscovering()) {
+//				mBluetoothAdapter.cancelDiscovery();
+//			}			
+//		}
+//		
+//		if (mConnector != null) {
+//			try {
+//				mConnector.disconnect();
+//			} catch (P25ConnectionException e) {
+//				e.printStackTrace();
+//			}
+//		}
 		
 		super.onPause();
 	}
 	
 	@Override
 	public void onDestroy() {
-		unregisterReceiver(mReceiver);
+//		unregisterReceiver(mReceiver);
 		
 		super.onDestroy();
 	}
@@ -295,18 +369,18 @@ public class MainActivity extends Activity {
 	
 	private void showDisabled() {
 		showToast("Bluetooth disabled");
-		
-		mEnableBtn.setVisibility(View.VISIBLE);		
-		mConnectBtn.setVisibility(View.GONE);
-		mDeviceSp.setVisibility(View.GONE);
+//		
+//		mEnableBtn.setVisibility(View.VISIBLE);		
+//		mConnectBtn.setVisibility(View.GONE);
+//		mDeviceSp.setVisibility(View.GONE);
 	}
 	
 	private void showEnabled() {		
 		showToast("Bluetooth enabled");
 		
-		mEnableBtn.setVisibility(View.GONE);		
-		mConnectBtn.setVisibility(View.VISIBLE);
-		mDeviceSp.setVisibility(View.VISIBLE);
+//		mEnableBtn.setVisibility(View.GONE);		
+//		mConnectBtn.setVisibility(View.VISIBLE);
+//		mDeviceSp.setVisibility(View.VISIBLE);
 	}
 	
 	private void showUnsupported() {
@@ -349,62 +423,59 @@ public class MainActivity extends Activity {
 		mDeviceSp.setEnabled(true);
 	}
 	
-	private void connect() {
-		if (mDeviceList == null || mDeviceList.size() == 0) {
-			return;
-		}
+//	private void connect() {
+//		if (mDeviceList == null || mDeviceList.size() == 0) {
+//			return;
+//		}
 		
-		BluetoothDevice device = mDeviceList.get(mDeviceSp.getSelectedItemPosition());
-		
-		if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-			try {
-				createBond(device);
-			} catch (Exception e) {
-				showToast("Failed to pair device");
-				
-				return;
-			}
-		}
-		
-		try {
-			if (!mConnector.isConnected()) {
-				mConnector.connect(device);
-			} else {
-				mConnector.disconnect();
-				
-				showDisonnected();
-			}
-		} catch (P25ConnectionException e) {
-			e.printStackTrace();
-		}
+//		BluetoothDevice device = mDeviceList.get(mDeviceSp.getSelectedItemPosition());
+//		
+//		if (device.getBondState() == BluetoothDevice.BOND_NONE) {
+//			try {
+//				createBond(device);
+//			} catch (Exception e) {
+//				showToast("Failed to pair device");
+//				
+//				return;
+//			}
+//		}
+//		
+//		try {
+//			if (!mConnector.isConnected()) {
+//				mConnector.connect(device);
+//			} else {
+//				mConnector.disconnect();
+//				
+//				showDisonnected();
+//			}
+//		} catch (P25ConnectionException e) {
+//			e.printStackTrace();
+//		}
+//	}
+	
+//	private void createBond(BluetoothDevice device) throws Exception { 
+//        
+//        try {
+//            Class<?> cl 	= Class.forName("android.bluetooth.BluetoothDevice");
+//            Class<?>[] par 	= {};
+//            
+//            Method method 	= cl.getMethod("createBond", par);
+//            
+//            method.invoke(device);
+//            
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            
+//            throw e;
+//        }
+//    }
+	
+	private void sendData(byte[] bytes) throws IOException {
+		//			mConnector.sendData(bytes);
+		mSerialPort.writePort(bytes, bytes.length);
 	}
 	
-	private void createBond(BluetoothDevice device) throws Exception { 
-        
-        try {
-            Class<?> cl 	= Class.forName("android.bluetooth.BluetoothDevice");
-            Class<?>[] par 	= {};
-            
-            Method method 	= cl.getMethod("createBond", par);
-            
-            method.invoke(device);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            
-            throw e;
-        }
-    }
-	
-	private void sendData(byte[] bytes) {
-		try {
-			mConnector.sendData(bytes);
-		} catch (P25ConnectionException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void printStruk() {
+	private void printStruk() throws IOException {
 		String titleStr	= "STRUK PEMBAYARAN TAGIHAN LISTRIK" + "\n\n";
 		
 		StringBuilder contentSb	= new StringBuilder();
@@ -481,7 +552,7 @@ public class MainActivity extends Activity {
 		sendData(senddata);	
 	}
 	
-	private void printDemoContent(){
+	private void printDemoContent() throws IOException{
 		   
 		/*********** print head*******/
 		String receiptHead = "************************" 
@@ -568,7 +639,7 @@ public class MainActivity extends Activity {
 		sendData(senddata);		
 	}
 	
-	private void printText(String text) {
+	private void printText(String text) throws IOException {
 		byte[] line 	= Printer.printfont(text + "\n\n", FontDefine.FONT_32PX, FontDefine.Align_CENTER, (byte) 0x1A, 
 							PocketPos.LANGUAGE_ENGLISH);
 		byte[] senddata = PocketPos.FramePack(PocketPos.FRAME_TOF_PRINT, line, 0, line.length);
@@ -576,7 +647,7 @@ public class MainActivity extends Activity {
 		sendData(senddata);		
 	}
 	
-	private void print1DBarcode() {
+	private void print1DBarcode() throws IOException {
 		String content	= "6901234567892";
 	
 		//1D barcode format (hex): 1d 6b 02 0d + barcode data
@@ -596,7 +667,7 @@ public class MainActivity extends Activity {
 		sendData(newline);
 	}
 	
-	private void print2DBarcode() {
+	private void print2DBarcode() throws IOException {
 		String content 	= "Lorenz Blog - www.londatiga.net";
 		
 		//2D barcode format (hex) : 1d 6b 10 00 00 00 00 00 1f + barcode data
@@ -655,9 +726,19 @@ public class MainActivity extends Activity {
 	           .setItems(types, new DialogInterface.OnClickListener() {
 	               public void onClick(DialogInterface dialog, int which) {
 		               if (which == 0) {
-		            	   print1DBarcode();
+		            	   try {
+							print1DBarcode();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 		               } else {
-		            	   print2DBarcode();
+		            	   try {
+							print2DBarcode();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 		               }
 	           }
 	    });
@@ -665,42 +746,42 @@ public class MainActivity extends Activity {
 	    builder.create().show();
 	}
 	
-	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-	    public void onReceive(Context context, Intent intent) {	    	
-	        String action = intent.getAction();
-	        
-	        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-	        	final int state 	= intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-	        	
-	        	if (state == BluetoothAdapter.STATE_ON) {
-	        		showEnabled();
-	        	} else if (state == BluetoothAdapter.STATE_OFF) {
-		        	showDisabled();
-	        	}
-	        } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-	        	mDeviceList = new ArrayList<BluetoothDevice>();
-				
-				mProgressDlg.show();
-	        } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-	        	mProgressDlg.dismiss();
-	        	
-	        	updateDeviceList();
-	        } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-	        	BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-		        
-	        	mDeviceList.add(device);
-	        	
-	        	showToast("Found device " + device.getName());
-	        } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-	        	 final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
-	        	 
-	        	 if (state == BluetoothDevice.BOND_BONDED) {
-	        		 showToast("Paired");
-	        		 
-	        		 connect();
-	        	 }
-	        }
-	    }
-	};
+//	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+//	    public void onReceive(Context context, Intent intent) {	    	
+//	        String action = intent.getAction();
+//	        
+//	        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+//	        	final int state 	= intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+//	        	
+//	        	if (state == BluetoothAdapter.STATE_ON) {
+//	        		showEnabled();
+//	        	} else if (state == BluetoothAdapter.STATE_OFF) {
+//		        	showDisabled();
+//	        	}
+//	        } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
+//	        	mDeviceList = new ArrayList<BluetoothDevice>();
+//				
+//				mProgressDlg.show();
+//	        } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+//	        	mProgressDlg.dismiss();
+//	        	
+//	        	updateDeviceList();
+//	        } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+//	        	BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+//		        
+//	        	mDeviceList.add(device);
+//	        	
+//	        	showToast("Found device " + device.getName());
+//	        } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+//	        	 final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+//	        	 
+//	        	 if (state == BluetoothDevice.BOND_BONDED) {
+//	        		 showToast("Paired");
+//	        		 
+//	        		 connect();
+//	        	 }
+//	        }
+//	    }
+//	};
 	
 }
