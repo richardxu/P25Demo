@@ -12,7 +12,7 @@
         android:layout_marginRight="@dimen/activity_vertical_margin"          
         android:layout_marginLeft="@dimen/activity_vertical_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin" 
-        android:enabled="true"
+        android:enabled="false"
         android:text="@string/text_print_demo" />
     
     <Button
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/activity_vertical_margin"            
         android:layout_marginLeft="@dimen/activity_vertical_margin" 
-        android:enabled="true"
+        android:enabled="false"
         android:text="@string/text_print_barcode" />
     
     <Button
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/activity_vertical_margin"
         android:layout_marginLeft="@dimen/activity_vertical_margin" 
-        android:enabled="true"
+        android:enabled="false"
         android:text="@string/text_print_image" />
     
     <Button
@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/activity_vertical_margin"   
         android:layout_marginLeft="@dimen/activity_vertical_margin" 
-        android:enabled="true"
+        android:enabled="false"
         android:text="@string/text_print_receipt" />
     
     <Button
@@ -48,7 +48,16 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/activity_vertical_margin"   
         android:layout_marginLeft="@dimen/activity_vertical_margin" 
-        android:enabled="true"
+        android:enabled="false"
         android:text="@string/text_print_text" />
+    
+    <Button
+        android:id="@+id/btn_print_forise"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_vertical_margin"
+        android:enabled="false"
+        android:text="@string/text_print_forise" />
     
 </LinearLayout>

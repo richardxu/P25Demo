@@ -10,35 +10,17 @@ import net.londatiga.android.bluebamboo.util.Util;
 import net.londatiga.android.bluebamboo.util.DataConstants;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.InvalidParameterException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Application;
-import android.app.ProgressDialog;
 import android.os.Build;
 import android.os.Bundle;
-//import android_serialport_api.SerialPort;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
 import android.widget.Toast;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Set;
 
 
 /**
@@ -48,181 +30,38 @@ import java.util.Set;
  *
  */
 public class MainActivity extends Activity {
-	private Button mConnectBtn;
-	private Button mEnableBtn;
 	private Button mPrintDemoBtn;
 	private Button mPrintBarcodeBtn;
 	private Button mPrintImageBtn;
 	private Button mPrintReceiptBtn;
+	private Button mPrintForiseBtn;
 	private Button mPrintTextBtn;
-	private Spinner mDeviceSp;	
 	
-	private ProgressDialog mProgressDlg;
-	private ProgressDialog mConnectingDlg;
-	
-	private BluetoothAdapter mBluetoothAdapter;
-	
-	private P25Connector mConnector;
-	
-	private ArrayList<BluetoothDevice> mDeviceList = new ArrayList<BluetoothDevice>();
-	
-    protected Application mApplication;
-	//protected SerialPort mSerialPort;
 	private SerialPort mSerialPort; 
 	protected OutputStream mOutputStream;
-	private InputStream mInputStream;
-	private ReadThread mReadThread;
-
-	private class ReadThread extends Thread {
-
-		@Override
-		public void run() {
-			super.run();
-			while(!isInterrupted()) {
-				int size;
-				try {
-					byte[] buffer = new byte[64];
-					if (mInputStream == null) return;
-					size = mInputStream.read(buffer);
-//					if (size > 0) {
-//						onDataReceived(buffer, size);
-//					}
-				} catch (IOException e) {
-					e.printStackTrace();
-					return;
-				}
-			}
-		}
-	}
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.activity_main);		
-		
-//		mConnectBtn			= (Button) findViewById(R.id.btn_connect);
-//		mEnableBtn			= (Button) findViewById(R.id.btn_enable);
+
 		mPrintDemoBtn 		= (Button) findViewById(R.id.btn_print_demo);
 		mPrintBarcodeBtn 	= (Button) findViewById(R.id.btn_print_barcode);
 		mPrintImageBtn 		= (Button) findViewById(R.id.btn_print_image);
 		mPrintReceiptBtn 	= (Button) findViewById(R.id.btn_print_receipt);
+		mPrintForiseBtn 	= (Button) findViewById(R.id.btn_print_forise);
 		mPrintTextBtn		= (Button) findViewById(R.id.btn_print_text);
-//		mDeviceSp 			= (Spinner) findViewById(R.id.sp_device);
+
 		
 		mSerialPort=new SerialPort("/dev/ttyS2",9600,0);
 		 //Log.d("Serail Port Open ...", strTemp);
-			if(mSerialPort.openPort()<0)
-			{
-				showToast("============open serial port failed============");
-//					Toast.makeText(this, getString(R.string.open_serial_error), Toast.LENGTH_SHORT).show();
-			}else{
-                  // mIccardInitThread = new IccardInitThread();
-                   //mIccardInitThread.start();
-           }
-		
-//        mApplication = (Application) getApplication();
-//		try {
-//			mSerialPort = ((Object) mApplication).getSerialPort();
-//			mOutputStream = mSerialPort.getOutputStream();
-//			mInputStream = mSerialPort.getInputStream();
-//
-//			/* Create a receiving thread */
-//			mReadThread = new ReadThread();
-//			mReadThread.start();
-//		} catch (SecurityException e) {
-//			DisplayError(R.string.error_security);
-//		} catch (IOException e) {
-//			DisplayError(R.string.error_unknown);
-//		} catch (InvalidParameterException e) {
-//			DisplayError(R.string.error_configuration);
-//		}
-		
-//		mBluetoothAdapter	= BluetoothAdapter.getDefaultAdapter();
-				
-//		if (mBluetoothAdapter == null) {
-//			showUnsupported();
-//		} else {
-//			if (!mBluetoothAdapter.isEnabled()) {
-//				showDisabled();
-//			} else {
-//				showEnabled();
-//				
-//				Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-//				
-//				if (pairedDevices != null) {
-//					mDeviceList.addAll(pairedDevices);
-//					
-//					updateDeviceList();
-//				}
-//			}
-//			
-//			mProgressDlg 	= new ProgressDialog(this);
-//			
-//			mProgressDlg.setMessage("Scanning...");
-//			mProgressDlg.setCancelable(false);
-//			mProgressDlg.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-//			    @Override
-//			    public void onClick(DialogInterface dialog, int which) {
-//			        dialog.dismiss();
-//			        
-//			        mBluetoothAdapter.cancelDiscovery();
-//			    }
-//			});
-//			
-//			mConnectingDlg 	= new ProgressDialog(this);
-//			
-////			mConnectingDlg.setMessage("Connecting...");
-////			mConnectingDlg.setCancelable(false);
-//			
-//			mConnector 		= new P25Connector(new P25Connector.P25ConnectionListener() {
-//				
-//				@Override
-//				public void onStartConnecting() {
-//					mConnectingDlg.show();
-//				}
-//				
-//				@Override
-//				public void onConnectionSuccess() {
-//					mConnectingDlg.dismiss();
-//					
-//					showConnected();
-//				}
-//				
-//				@Override
-//				public void onConnectionFailed(String error) {
-//					mConnectingDlg.dismiss();
-//				}
-//				
-//				@Override
-//				public void onConnectionCancelled() {
-//					mConnectingDlg.dismiss();
-//				}
-//				
-//				@Override
-//				public void onDisconnected() {
-//					showDisonnected();
-//				}
-//			});
-//			
-			//enable bluetooth
-//			mEnableBtn.setOnClickListener(new View.OnClickListener() {				
-//				@Override
-//				public void onClick(View v) {					
-//					Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-//						
-//					startActivityForResult(intent, 1000);					
-//				}
-//			});
-			
-			//connect/disconnect
-//			mConnectBtn.setOnClickListener(new View.OnClickListener() {				
-//				@Override
-//				public void onClick(View arg0) {
-////					connect();			
-//				}
-//			});
-//			
+		if(mSerialPort.openPort()<0)
+		{
+			showToast("============open serial port failed============");
+			showUnsupported();
+//			Toast.makeText(this, getString(R.string.open_serial_error), Toast.LENGTH_SHORT).show();
+		}else{
+			showConnected();	
 			//print demo text
 			mPrintDemoBtn.setOnClickListener(new View.OnClickListener() {			
 				@Override
@@ -284,195 +123,72 @@ public class MainActivity extends Activity {
 					}
 				}
 			});
-//		}
 		
-//		IntentFilter filter = new IntentFilter();
 		
-//		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-//		filter.addAction(BluetoothDevice.ACTION_FOUND);
-//		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-//		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-//		filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-//		
-//		registerReceiver(mReceiver, filter);
+		mPrintForiseBtn.setOnClickListener(new View.OnClickListener() {				
+			@Override
+			public void onClick(View arg0) {
+				try {
+					//Richard: debug 
+					Log.d("richard", "========func: printForise=======");
+					printForise();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.main, menu);
-		
-		return true;
 	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		if (item.getItemId() == R.id.action_scan) {
-			mBluetoothAdapter.startDiscovery();
-		}
-		
-		return super.onOptionsItemSelected(item);
-	}
+
 
 	@Override
 	public void onPause() {
-//		if (mBluetoothAdapter != null) {
-//			if (mBluetoothAdapter.isDiscovering()) {
-//				mBluetoothAdapter.cancelDiscovery();
-//			}			
-//		}
-//		
-//		if (mConnector != null) {
-//			try {
-//				mConnector.disconnect();
-//			} catch (P25ConnectionException e) {
-//				e.printStackTrace();
-//			}
-//		}
-		
 		super.onPause();
 	}
 	
 	@Override
 	public void onDestroy() {
-//		unregisterReceiver(mReceiver);
-		
 		super.onDestroy();
 	}
-	
-	private String[] getArray(ArrayList<BluetoothDevice> data) {
-		String[] list = new String[0];
-		
-		if (data == null) return list;
-		
-		int size	= data.size();
-		list		= new String[size];
-		
-		for (int i = 0; i < size; i++) {
-			list[i] = data.get(i).getName();
-		}
-		
-		return list;	
-	}
-	
+
 	private void showToast(String message) {
 		Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 	}
 	
-	private void updateDeviceList() {
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.simple_spinner_item, getArray(mDeviceList));
-		
-		adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-		
-		mDeviceSp.setAdapter(adapter);
-		mDeviceSp.setSelection(0);
-	}
-	
-	private void showDisabled() {
-		showToast("Bluetooth disabled");
-//		
-//		mEnableBtn.setVisibility(View.VISIBLE);		
-//		mConnectBtn.setVisibility(View.GONE);
-//		mDeviceSp.setVisibility(View.GONE);
-	}
-	
-	private void showEnabled() {		
-		showToast("Bluetooth enabled");
-		
-//		mEnableBtn.setVisibility(View.GONE);		
-//		mConnectBtn.setVisibility(View.VISIBLE);
-//		mDeviceSp.setVisibility(View.VISIBLE);
-	}
-	
 	private void showUnsupported() {
-		showToast("Bluetooth is unsupported by this device");
-
-		mConnectBtn.setEnabled(false);		
+		showToast("Serial is unsupported by this device");
+	
 		mPrintDemoBtn.setEnabled(false);
 		mPrintBarcodeBtn.setEnabled(false);
 		mPrintImageBtn.setEnabled(false);
 		mPrintReceiptBtn.setEnabled(false);
+		mPrintForiseBtn.setEnabled(false);
 		mPrintTextBtn.setEnabled(false);
-		mDeviceSp.setEnabled(false);
 	}
 	
 	private void showConnected() {
-		showToast("Connected");
-		
-		mConnectBtn.setText("Disconnect");
+		showToast("Serial Port Connected");
 		
 		mPrintDemoBtn.setEnabled(true);
 		mPrintBarcodeBtn.setEnabled(true);
 		mPrintImageBtn.setEnabled(true);
 		mPrintReceiptBtn.setEnabled(true);
+		mPrintForiseBtn.setEnabled(true);
 		mPrintTextBtn.setEnabled(true);
-		
-		mDeviceSp.setEnabled(false);
+
 	}
-	
-	private void showDisonnected() {
-		showToast("Disconnected");
-		
-		mConnectBtn.setText("Connect");
-		
-		mPrintDemoBtn.setEnabled(false);
-		mPrintBarcodeBtn.setEnabled(false);
-		mPrintImageBtn.setEnabled(false);
-		mPrintReceiptBtn.setEnabled(false);
-		mPrintTextBtn.setEnabled(false);
-		
-		mDeviceSp.setEnabled(true);
-	}
-	
-//	private void connect() {
-//		if (mDeviceList == null || mDeviceList.size() == 0) {
-//			return;
-//		}
-		
-//		BluetoothDevice device = mDeviceList.get(mDeviceSp.getSelectedItemPosition());
-//		
-//		if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-//			try {
-//				createBond(device);
-//			} catch (Exception e) {
-//				showToast("Failed to pair device");
-//				
-//				return;
-//			}
-//		}
-//		
-//		try {
-//			if (!mConnector.isConnected()) {
-//				mConnector.connect(device);
-//			} else {
-//				mConnector.disconnect();
-//				
-//				showDisonnected();
-//			}
-//		} catch (P25ConnectionException e) {
-//			e.printStackTrace();
-//		}
-//	}
-	
-//	private void createBond(BluetoothDevice device) throws Exception { 
-//        
-//        try {
-//            Class<?> cl 	= Class.forName("android.bluetooth.BluetoothDevice");
-//            Class<?>[] par 	= {};
-//            
-//            Method method 	= cl.getMethod("createBond", par);
-//            
-//            method.invoke(device);
-//            
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            
-//            throw e;
-//        }
-//    }
-	
+
 	private void sendData(byte[] bytes) throws IOException {
-		//			mConnector.sendData(bytes);
 		mSerialPort.writePort(bytes, bytes.length);
+	}
+	
+	private void printForise() throws IOException {
+		String content 	= "=====forise=======\n\n";
+	
+		byte[] contents	= content.getBytes();
+		sendData(contents);	
 	}
 	
 	private void printStruk() throws IOException {
@@ -745,43 +461,5 @@ public class MainActivity extends Activity {
 	    
 	    builder.create().show();
 	}
-	
-//	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-//	    public void onReceive(Context context, Intent intent) {	    	
-//	        String action = intent.getAction();
-//	        
-//	        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-//	        	final int state 	= intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-//	        	
-//	        	if (state == BluetoothAdapter.STATE_ON) {
-//	        		showEnabled();
-//	        	} else if (state == BluetoothAdapter.STATE_OFF) {
-//		        	showDisabled();
-//	        	}
-//	        } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-//	        	mDeviceList = new ArrayList<BluetoothDevice>();
-//				
-//				mProgressDlg.show();
-//	        } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-//	        	mProgressDlg.dismiss();
-//	        	
-//	        	updateDeviceList();
-//	        } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-//	        	BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-//		        
-//	        	mDeviceList.add(device);
-//	        	
-//	        	showToast("Found device " + device.getName());
-//	        } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-//	        	 final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
-//	        	 
-//	        	 if (state == BluetoothDevice.BOND_BONDED) {
-//	        		 showToast("Paired");
-//	        		 
-//	        		 connect();
-//	        	 }
-//	        }
-//	    }
-//	};
 	
 }
