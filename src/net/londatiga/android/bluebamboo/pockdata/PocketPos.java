@@ -133,6 +133,7 @@ public class PocketPos
   public final static byte B_TRANSFER = (byte) 0x7D;
   public final static byte B_XOR = (byte) 0x20;
   public final static byte B_ESC = (byte) 0x1B;
+  public final static byte B_CHINESE = (byte) 0x1C;
   
   private static int dataID = 0;
 
@@ -417,35 +418,30 @@ public class PocketPos
         ) {
       if(srcOffset < 0 || srcLen < 1 || (srcOffset + srcLen) > srcBuff.length)
         return null;
+
       byte[] checkSum = new byte[2];
       int countSpecialBytes = calcCheckSumAndSpecialBytes(srcBuff, srcOffset, srcLen, checkSum, 0);
       //byte[] buffer = new byte[(1+1+1) + 1 + 1 + BYTES_OF_DATA_LENGTH + countSpecialBytes  + (1+1+1)];
-      byte[] buffer = new byte[(1) + 1 + 1 + BYTES_OF_DATA_LENGTH + countSpecialBytes  + (1)]; //For P25
+      //byte[] buffer = new byte[(1) + 1 + 1 + BYTES_OF_DATA_LENGTH + countSpecialBytes  + (1)]; //For P25
       // |C0H(SOF) | (TOF) | DATA_ID | DATA Length | DATA | CHECK_SUM |C1H(EOF)|
+     
+      Log.d("Richard", "countSpecialBytes: " + countSpecialBytes + " BYTES_OF_DATA_LENGTH : " + BYTES_OF_DATA_LENGTH);
+
+      // |C0H(SOF) | DATA |C1H(EOF)|
+//      byte[] buffer = new byte[(1) +countSpecialBytes+ (1)]; //For E23
+      byte[] buffer = new byte[countSpecialBytes]; //For E23
       int offset = 0;
-      buffer[offset] = B_SOF;
-      offset++;
 //      buffer[offset] = B_SOF;
 //      offset++;
-//      buffer[offset] = B_SOF;
-//      offset++;
-      buffer[offset] = typeFrame;
-      offset++;
-      buffer[offset] = getDataID();
-      offset++;
-      intToAscii(srcLen, buffer, offset, BYTES_OF_DATA_LENGTH);
-      offset += BYTES_OF_DATA_LENGTH;
+      //intToAscii(srcLen, buffer, offset, BYTES_OF_DATA_LENGTH);
+      //offset += BYTES_OF_DATA_LENGTH;
       
       offset = convertSpecialBytes(srcBuff, srcOffset, srcLen, buffer, offset);
 
-      offset = convertSpecialBytes(checkSum, 0, checkSum.length, buffer, offset);
+      //offset = convertSpecialBytes(checkSum, 0, checkSum.length, buffer, offset);
 
 //      buffer[offset] = B_EOF;
 //      offset++;
-//      buffer[offset] = B_EOF;
-//      offset++;
-      buffer[offset] = B_EOF;
-      offset++;
       return buffer;
     }
     
@@ -652,10 +648,14 @@ public class PocketPos
     }
     
     byte[] lang = null;
-//    if (languageSet != LANGUAGE_ENGLISH)
-//    {
-    	lang = new byte[]{B_ESC, (byte)0x4B, (byte)0x31,B_ESC, (byte)0x52, languageSet};
-//    }
+    if (languageSet != LANGUAGE_ENGLISH)
+    {
+    	//lang = new byte[]{B_ESC, (byte)0x4B, (byte)0x31,B_ESC, (byte)0x52, languageSet};
+    	//lang = new byte[]{(byte)0x1C, (byte)0x26};
+    }else 
+    {
+    	//lang = new byte[]{(byte)0x1C, (byte)0x25};
+    }
     byte[] font = null;
     byte[] fontalign = null;
     byte[] fontlinespace = null;
