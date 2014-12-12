@@ -1,7 +1,8 @@
 package net.londatiga.android.bluebamboo.pockdata;
 
-import android.util.Log;
+import java.io.UnsupportedEncodingException;
 
+import android.util.Log;
 import net.londatiga.android.bluebamboo.util.NumberUtil;
 import net.londatiga.android.bluebamboo.util.StringUtil;
 
@@ -636,12 +637,13 @@ public class PocketPos
     }
     return msg;
   }
-  public static byte[] convertPrintData(String str, int offset, int length, byte languageSet, byte fontSet,byte align,byte linespace)
+  public static byte[] convertPrintData(String str, int offset, int length, byte languageSet, byte fontSet,byte align,byte linespace) throws UnsupportedEncodingException
   {
     byte[] buffer = null;
     if (languageSet == LANGUAGE_CHINESE)
     {
-      buffer = char2ByteUTF8(str, offset, length);
+      buffer = str.getBytes("GBK") ; // char2ByteUTF8(str, offset, length);
+		Log.d("Richard", "=========in LANGUAGE_CHINESE mode "  );
     } else {
       buffer = new byte[length];
       System.arraycopy(str.getBytes(), offset, buffer, 0, length);
@@ -650,11 +652,10 @@ public class PocketPos
     byte[] lang = null;
     if (languageSet != LANGUAGE_ENGLISH)
     {
-    	//lang = new byte[]{B_ESC, (byte)0x4B, (byte)0x31,B_ESC, (byte)0x52, languageSet};
-    	//lang = new byte[]{(byte)0x1C, (byte)0x26};
+    	lang = new byte[]{(byte)0x1C, (byte)0x26};
     }else 
     {
-    	//lang = new byte[]{(byte)0x1C, (byte)0x25};
+    	lang = new byte[]{(byte)0x1C, (byte)0x2E};
     }
     byte[] font = null;
     byte[] fontalign = null;

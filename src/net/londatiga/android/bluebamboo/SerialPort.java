@@ -10,6 +10,7 @@ import java.io.OutputStream;
 
 import android.util.Log;
 
+
 public class SerialPort {
 
 	private static final String TAG = "SerialPort";
@@ -49,6 +50,13 @@ public class SerialPort {
 		
 		return 0;
 	}
+	
+//	 outputStream = serialPort.getOutputStream() ;
+	 /*	解决中文乱码        * 拿一个OutputStreamWriter包在OutputStream的底层流外面，设置GBK编码      
+	  *  * 已有一个OutputStream实例outputStream   
+	  */   
+//	 OutputStreamWriter writer = new OutputStreamWriter(outputStream, "GBK"); 
+	
 	public int writePort(byte[] data,int bytes) throws IOException {		
 		if (mFd == null) {
 			Log.e(TAG, "port No open");
@@ -85,9 +93,20 @@ public class SerialPort {
 	public void closePort() {
 		close();
 	}
+    
+    /**
+    * 发送数据
+    * @param data
+    * @return
+    */
+
+    public int sendMsgToTty(byte[] data) {
+        return write(data);
+    }
 	
 	// JNI
 	private native static FileDescriptor open(String path, int baudrate, int flags);
+    private native static int write(byte[] data);
 	public native void close();
 	static {
 		System.loadLibrary("serial_port");

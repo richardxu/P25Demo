@@ -1,12 +1,14 @@
 package net.londatiga.android.bluebamboo.util;
 
+import java.io.UnsupportedEncodingException;
+
 import net.londatiga.android.bluebamboo.pockdata.PocketPos;
 
 public class Printer {
 	
 	public Printer(){}
 	
-	public static byte[] printfont (String content,byte fonttype,byte fontalign,byte linespace,byte language){
+	public static byte[] printfont (String content,byte fonttype,byte fontalign,byte linespace,byte language) throws UnsupportedEncodingException{
 		
 		if (content != null && content.length() > 0) {
 			

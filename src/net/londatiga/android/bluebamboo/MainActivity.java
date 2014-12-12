@@ -5,22 +5,17 @@ import net.londatiga.android.bluebamboo.pockdata.PocketPos;
 import net.londatiga.android.bluebamboo.util.DateUtil;
 import net.londatiga.android.bluebamboo.util.FontDefine;
 import net.londatiga.android.bluebamboo.util.Printer;
-import net.londatiga.android.bluebamboo.util.StringUtil;
 import net.londatiga.android.bluebamboo.util.Util;
 import net.londatiga.android.bluebamboo.util.DataConstants;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-import android.content.DialogInterface;
 
 
 /**
@@ -34,7 +29,6 @@ public class MainActivity extends Activity {
 	private Button mPrintBarcodeBtn;
 	private Button mPrintImageBtn;
 	private Button mPrintReceiptBtn;
-	private Button mPrintForiseBtn;
 	private Button mPrintTextBtn;
 	
 	private SerialPort mSerialPort; 
@@ -49,7 +43,6 @@ public class MainActivity extends Activity {
 		mPrintBarcodeBtn 	= (Button) findViewById(R.id.btn_print_barcode);
 		mPrintImageBtn 		= (Button) findViewById(R.id.btn_print_image);
 		mPrintReceiptBtn 	= (Button) findViewById(R.id.btn_print_receipt);
-		mPrintForiseBtn 	= (Button) findViewById(R.id.btn_print_forise);
 		mPrintTextBtn		= (Button) findViewById(R.id.btn_print_text);
 		
 		mSerialPort=new SerialPort("/dev/ttyS2",9600,0);
@@ -82,6 +75,7 @@ public class MainActivity extends Activity {
 						public void onPrintClick(String text) {
 							try {
 								printText(text);
+								//printText("ÐìÁ¢²Ó");
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -126,21 +120,6 @@ public class MainActivity extends Activity {
 					}
 				}
 			});
-		
-		
-		mPrintForiseBtn.setOnClickListener(new View.OnClickListener() {				
-			@Override
-			public void onClick(View arg0) {
-				try {
-					//Richard: debug 
-					Log.d("richard", "========func: printForise=======");
-					printForise();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
 	}
 
 	}
@@ -167,7 +146,6 @@ public class MainActivity extends Activity {
 		mPrintBarcodeBtn.setEnabled(false);
 		mPrintImageBtn.setEnabled(false);
 		mPrintReceiptBtn.setEnabled(false);
-		mPrintForiseBtn.setEnabled(false);
 		mPrintTextBtn.setEnabled(false);
 	}
 	
@@ -176,9 +154,8 @@ public class MainActivity extends Activity {
 		
 		mPrintDemoBtn.setEnabled(true);
 		mPrintBarcodeBtn.setEnabled(true);
-		mPrintImageBtn.setEnabled(true);
+		mPrintImageBtn.setEnabled(false);
 		mPrintReceiptBtn.setEnabled(true);
-		mPrintForiseBtn.setEnabled(true);
 		mPrintTextBtn.setEnabled(true);
 
 	}
@@ -186,16 +163,9 @@ public class MainActivity extends Activity {
 	private void sendData(byte[] bytes) throws IOException {
 		mSerialPort.writePort(bytes, bytes.length);
 	}
-	
-	private void printForise() throws IOException {
-		String content 	= "=====forise=======\n\n";
-	
-		byte[] contents	= content.getBytes();
-		sendData(contents);	
-	}
-	
+
 	private void printStruk() throws IOException {
-		String titleStr	= "STRUK PEMBAYARAN TAGIHAN LISTRIK" + "\n\n";
+		String titleStr	= "\nSTRUK PEMBAYARAN TAGIHAN LISTRIK" + "\n\n";
 		
 		StringBuilder contentSb	= new StringBuilder();
 		
@@ -213,13 +183,7 @@ public class MainActivity extends Activity {
 		content2Sb.append("RP BAYAR  : Rp. 101.600,00" + "\n");
 		
 		String jpaRef	= "XXXX-XXXX-XXXX-XXXX" + "\n";
-		String message	= "PLN menyatakan struk ini sebagai bukti pembayaran yang sah." + "\n";
-		String message2	= "Rincian tagihan dapat diakses di www.pln.co.id Informasi Hubungi Call Center: "
-						+ "123 Atau Hub PLN Terdekat: 444" + "\n";
-		
-		long milis		= System.currentTimeMillis();
-		String date		= DateUtil.timeMilisToString(milis, "dd-MM-yy / HH:mm")  + "\n\n";
-		
+		String message	= "richard" + "\n";
 		byte[] titleByte	= Printer.printfont(titleStr, FontDefine.FONT_24PX,FontDefine.Align_CENTER, 
 								(byte)0x1A, PocketPos.LANGUAGE_ENGLISH);
 		
@@ -232,17 +196,7 @@ public class MainActivity extends Activity {
 		byte[] messageByte	= Printer.printfont(message, FontDefine.FONT_24PX,FontDefine.Align_CENTER,  (byte)0x1A, 
 								PocketPos.LANGUAGE_ENGLISH);
 		
-		byte[] content2Byte	= Printer.printfont(content2Sb.toString(), FontDefine.FONT_24PX,FontDefine.Align_LEFT,  
-								(byte)0x1A, PocketPos.LANGUAGE_ENGLISH);
-		
-		byte[] message2Byte	= Printer.printfont(message2, FontDefine.FONT_24PX,FontDefine.Align_CENTER,  (byte)0x1A, 
-								PocketPos.LANGUAGE_ENGLISH);
-		
-		byte[] dateByte		= Printer.printfont(date, FontDefine.FONT_24PX,FontDefine.Align_LEFT, (byte)0x1A, 
-								PocketPos.LANGUAGE_ENGLISH);
-		
-		byte[] totalByte	= new byte[titleByte.length + content1Byte.length + refByte.length + messageByte.length +
-		                	           content2Byte.length + message2Byte.length + dateByte.length];
+		byte[] totalByte	= new byte[titleByte.length + content1Byte.length + refByte.length + messageByte.length];
 		
 		
 		int offset = 0;
@@ -257,25 +211,36 @@ public class MainActivity extends Activity {
 		
 		System.arraycopy(messageByte, 0, totalByte, offset, messageByte.length);
 		offset += messageByte.length;
-		
-		System.arraycopy(content2Byte, 0, totalByte, offset, content2Byte.length);
-		offset += content2Byte.length;
-		
-		System.arraycopy(message2Byte, 0, totalByte, offset, message2Byte.length);
-		offset += message2Byte.length;
-		
-		System.arraycopy(dateByte, 0, totalByte, offset, dateByte.length);
+
 		
 		byte[] senddata = PocketPos.FramePack(PocketPos.FRAME_TOF_PRINT, totalByte, 0, totalByte.length);
 
 		sendData(senddata);	
 	}
 	
+	public static int char2ASCII(char c) {  
+	        return (int) c;  
+	} 
+	  
+    public static int[] string2ASCII(String s) {// ×Ö·û´®×ª»»ÎªASCIIÂë  
+        if (s == null || "".equals(s)) {  
+            return null;  
+        }  
+  
+        char[] chars = s.toCharArray();  
+        int[] asciiArray = new int[chars.length];  
+  
+        for (int i = 0; i < chars.length; i++) {  
+            asciiArray[i] = char2ASCII(chars[i]);  
+        }  
+        return asciiArray;  
+    }
+    	
 	private void printDemoContent() throws IOException{
-		   
+		
 		/*********** print head*******/
 		String receiptHead = "************************" + "\n" 
-				+ "   P25/M Test Print"+"\n"
+				+ "   E23 Test Print"+"\n"
 				+ "************************"
 				+ "\n";
 		
@@ -303,67 +268,19 @@ public class MainActivity extends Activity {
 		
 		byte[] header = Printer.printfont(receiptHead + "\n", FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
 		
-			
-		/*********** print English text*******/
-		StringBuffer sb = new StringBuffer();
-		for(int i=1; i<128; i++)
-			sb.append((char)i);
-		String content = sb.toString().trim();
+		sendData(header);		
 		
-		byte[] englishchartext24 			= Printer.printfont(content + "\n",FontDefine.FONT_24PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
-		byte[] englishchartext32			= Printer.printfont(content + "\n",FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
-		byte[] englishchartext24underline	= Printer.printfont(content + "\n",FontDefine.FONT_24PX_UNDERLINE,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
-		
-		//2D Bar Code
-		byte[] barcode = StringUtil.hexStringToBytes("1d 6b 02 0d 36 39 30 31 32 33 34 35 36 37 38 39 32");
-		
-		
-		/*********** print Tail*******/
-		String receiptTail =  "Test Completed" + "\n"
-				+ "************************" + "\n";
-		
-		String receiptWeb =  "** www.londatiga.net ** " + "\n\n\n";
-		
-		byte[] foot = Printer.printfont(receiptTail,FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
-		byte[] web	= Printer.printfont(receiptWeb,FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
-		
-		byte[] totladata =  new byte[header.length + englishchartext24.length + englishchartext32.length + englishchartext24underline.length + 
-		                              + barcode.length
-		                             + foot.length + web.length
-		                             ];
-	 	int offset = 0;
-		System.arraycopy(header, 0, totladata, offset, header.length);
-		offset += header.length;
-		
-		System.arraycopy(englishchartext24, 0, totladata, offset, englishchartext24.length);
-		offset+= englishchartext24.length;
-		
-		System.arraycopy(englishchartext32, 0, totladata, offset, englishchartext32.length);
-		offset+=englishchartext32.length;
-		
-		System.arraycopy(englishchartext24underline, 0, totladata, offset, englishchartext24underline.length);
-		offset+=englishchartext24underline.length;
-		
-		System.arraycopy(barcode, 0, totladata, offset, barcode.length);
-		offset+=barcode.length;
-
-		System.arraycopy(foot, 0, totladata, offset, foot.length);
-		offset+=foot.length;
-		
-		System.arraycopy(web, 0, totladata, offset, web.length);
-		offset+=web.length;
-		
-		byte[] senddata = PocketPos.FramePack(PocketPos.FRAME_TOF_PRINT, totladata, 0, totladata.length);
-		
-		sendData(senddata);		
 	}
 	
 	private void printText(String text) throws IOException {
 		byte[] line 	= Printer.printfont(text + "\n\n", FontDefine.FONT_32PX, FontDefine.Align_CENTER, (byte) 0x1A, 
-							PocketPos.LANGUAGE_ENGLISH);
+							PocketPos.LANGUAGE_CHINESE);
 		byte[] senddata = PocketPos.FramePack(PocketPos.FRAME_TOF_PRINT, line, 0, line.length);
-		Log.d("Richard", "========= " + senddata );
-		sendData(senddata);		
+		//Log.d("Richard", "========= " + senddata );
+		//sendData(senddata);	
+      //   String st = text+"\r";
+         //mSerialPort.sendMsgToTty(st.getBytes("GBK"));
+         mSerialPort.sendMsgToTty(senddata);
 	}
 	
 	private void print1DBarcode() throws IOException {

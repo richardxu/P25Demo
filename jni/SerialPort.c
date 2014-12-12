@@ -177,16 +177,6 @@ JNIEXPORT void JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_close
 int JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_write(
     JNIEnv *env,jobject clazz,jbyteArray data) 
 { 
-    LOGD("Java_net_londatiga_android_bluebamboo_SerialPort_write");
-   // jclass SerialPortClass = (*env)->GetObjectClass(env, clazz);
-    //jclass FileDescriptorClass = (*env)->FindClass(env, "java/io/FileDescriptor");
-
-    LOGD("=================2222222222222222222222=============");
-   // jfieldID mFdID = (*env)->GetFieldID(env, SerialPortClass, "mFd", "Ljava/io/FileDescriptor;");
-    //jfieldID descriptorID = (*env)->GetFieldID(env, FileDescriptorClass, "descriptor", "I");
-
-    //jobject mFd = (*env)->GetObjectField(env, clazz, mFdID);
-    //jint descriptor = (*env)->GetIntField(env, mFd, descriptorID);
     jbyte* arrayData = (jbyte*)(*env)->GetByteArrayElements(env,data, NULL);
     jsize arrayLength = (*env)->GetArrayLength(env,data);
     char* byteData = (char*)arrayData;
@@ -201,7 +191,6 @@ int JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_write(
           }
       }
     return re;
-    //return 0;
 }
 
 
