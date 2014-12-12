@@ -154,7 +154,7 @@ public class MainActivity extends Activity {
 		
 		mPrintDemoBtn.setEnabled(true);
 		mPrintBarcodeBtn.setEnabled(true);
-		mPrintImageBtn.setEnabled(false);
+		mPrintImageBtn.setEnabled(true);
 		mPrintReceiptBtn.setEnabled(true);
 		mPrintTextBtn.setEnabled(true);
 
@@ -218,25 +218,7 @@ public class MainActivity extends Activity {
 		sendData(senddata);	
 	}
 	
-	public static int char2ASCII(char c) {  
-	        return (int) c;  
-	} 
-	  
-    public static int[] string2ASCII(String s) {// 字符串转换为ASCII码  
-        if (s == null || "".equals(s)) {  
-            return null;  
-        }  
-  
-        char[] chars = s.toCharArray();  
-        int[] asciiArray = new int[chars.length];  
-  
-        for (int i = 0; i < chars.length; i++) {  
-            asciiArray[i] = char2ASCII(chars[i]);  
-        }  
-        return asciiArray;  
-    }
-    	
-	private void printDemoContent() throws IOException{
+    private void printDemoContent() throws IOException{
 		
 		String CompanyInfo=new String("深圳市银派数码技术有限公司\n");
 		
