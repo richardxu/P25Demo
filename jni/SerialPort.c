@@ -30,6 +30,8 @@ static const char *TAG="serial_port";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
+static int mfd;
+
 static speed_t getBaudrate(jint baudrate)
 {
 	switch(baudrate) {
@@ -97,6 +99,7 @@ JNIEXPORT jobject JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_open
 		const char *path_utf = (*env)->GetStringUTFChars(env, path, &iscopy);
 		LOGD("Opening serial port %s with flags 0x%x", path_utf, O_RDWR | flags);
 		fd = open(path_utf, O_RDWR | flags);
+                mfd = fd;
 		LOGD("open() fd = %d", fd);
 		(*env)->ReleaseStringUTFChars(env, path, path_utf);
 		if (fd == -1)
@@ -166,4 +169,39 @@ JNIEXPORT void JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_close
 	LOGD("close(fd = %d)", descriptor);
 	close(descriptor);
 }
+
+/*
+* serial port write 
+*/
+
+int JNICALL Java_net_londatiga_android_bluebamboo_SerialPort_write(
+    JNIEnv *env,jobject clazz,jbyteArray data) 
+{ 
+    LOGD("Java_net_londatiga_android_bluebamboo_SerialPort_write");
+   // jclass SerialPortClass = (*env)->GetObjectClass(env, clazz);
+    //jclass FileDescriptorClass = (*env)->FindClass(env, "java/io/FileDescriptor");
+
+    LOGD("=================2222222222222222222222=============");
+   // jfieldID mFdID = (*env)->GetFieldID(env, SerialPortClass, "mFd", "Ljava/io/FileDescriptor;");
+    //jfieldID descriptorID = (*env)->GetFieldID(env, FileDescriptorClass, "descriptor", "I");
+
+    //jobject mFd = (*env)->GetObjectField(env, clazz, mFdID);
+    //jint descriptor = (*env)->GetIntField(env, mFd, descriptorID);
+    jbyte* arrayData = (jbyte*)(*env)->GetByteArrayElements(env,data, NULL);
+    jsize arrayLength = (*env)->GetArrayLength(env,data);
+    char* byteData = (char*)arrayData;
+    int len = (int)arrayLength;
+    int re;
+    LOGD("write data len:%d",len);
+    if (mfd > 0 )
+      {
+          re = write(mfd, byteData, len);
+          if(re == -1) {
+              LOGE("write device error");
+          }
+      }
+    return re;
+    //return 0;
+}
+
 
