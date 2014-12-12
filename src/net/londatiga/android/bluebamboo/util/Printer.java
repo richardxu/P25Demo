@@ -10,16 +10,22 @@ public class Printer {
 	
 	public static byte[] printfont (String content,byte fonttype,byte fontalign,byte linespace,byte language) throws UnsupportedEncodingException{
 		
-		if (content != null && content.length() > 0) {
-			
-			content = content + "\n";
-			byte[] temp = null;
-			temp = PocketPos.convertPrintData(content, 0,content.length(), language, fonttype,fontalign,linespace);
-			
-			return temp;
-		}else{
-			return null;
+		try {
+			if (content != null && content.length() > 0) {
+				
+				content = content + "\n";
+				byte[] temp = null;
+				temp = PocketPos.convertPrintData(content, 0,content.length(), language, fonttype,fontalign,linespace);
+				
+				return temp;
+			}else{
+				return null;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		return null;
 	}
 	
 }

@@ -238,6 +238,8 @@ public class MainActivity extends Activity {
     	
 	private void printDemoContent() throws IOException{
 		
+		String CompanyInfo=new String("深圳市银派数码技术有限公司\n");
+		
 		/*********** print head*******/
 		String receiptHead = "************************" + "\n" 
 				+ "   E23 Test Print"+"\n"
@@ -256,6 +258,7 @@ public class MainActivity extends Activity {
 		
 		StringBuffer receiptHeadBuffer = new StringBuffer(100);
 		
+		receiptHeadBuffer.append(CompanyInfo);
 		receiptHeadBuffer.append(receiptHead);
 		receiptHeadBuffer.append(Util.nameLeftValueRightJustify(date, time, DataConstants.RECEIPT_WIDTH) + "\n");
 		
@@ -266,16 +269,17 @@ public class MainActivity extends Activity {
 		receiptHeadBuffer.append(Util.nameLeftValueRightJustify("SDK:", sdkVer, DataConstants.RECEIPT_WIDTH));
 		receiptHead = receiptHeadBuffer.toString();
 		
-		byte[] header = Printer.printfont(receiptHead + "\n", FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_ENGLISH);
+		byte[] header = Printer.printfont(receiptHead + "\n", FontDefine.FONT_32PX,FontDefine.Align_CENTER,(byte)0x1A,PocketPos.LANGUAGE_CHINESE);
 		
 		sendData(header);		
 		
 	}
 	
 	private void printText(String text) throws IOException {
-		byte[] line 	= Printer.printfont(text + "\n\n", FontDefine.FONT_32PX, FontDefine.Align_CENTER, (byte) 0x1A, 
+		byte[] line 	= Printer.printfont(text+ "\n\n", FontDefine.FONT_32PX, FontDefine.Align_CENTER, (byte) 0x1A, 
 							PocketPos.LANGUAGE_CHINESE);
 		byte[] senddata = PocketPos.FramePack(PocketPos.FRAME_TOF_PRINT, line, 0, line.length);
+		
 		//Log.d("Richard", "========= " + senddata );
 		//sendData(senddata);	
       //   String st = text+"\r";
